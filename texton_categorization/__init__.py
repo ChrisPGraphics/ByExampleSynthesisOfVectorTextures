@@ -1,0 +1,2 @@
+from texton_categorization.base_categorization import BaseCategorization
+from texton_categorization.clustering_categorization import ClusteringCategorization, ColorAreaCompactnessCategorization
