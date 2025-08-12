@@ -9,10 +9,8 @@ import numba
 import numpy as np
 import shapely
 
-import synthesis.weights as weights_object
 import hierarchy_node
-import matplotlib.pyplot as plt
-
+import synthesis.weights as weights_object
 
 
 @numba.jit(nopython=True)
@@ -63,13 +61,31 @@ def sample_probability_distribution(distro: np.ndarray, count: int = None) -> ty
     return col, row
 
 
+def get_square_region(arr1, arr2, x, y, n):
+    x1 = max(0, x - n)
+    y1 = max(0, y - n)
+    x2 = min(arr1.shape[1], x + n + 1)  # +1 because slicing is exclusive
+    y2 = min(arr1.shape[0], y + n + 1)
+
+    width = x2 - x1
+    height = y2 - y1
+
+    arr1 = arr1[y1:y2, x1:x2]
+    arr2 = arr2[y1:y2, x1:x2]
+
+    new_x = x - x1
+    new_y = y - y1
+
+    return arr1, arr2, (new_x, new_y), (width, height)
+
+
 def primary_texton_distro(
         polygons: hierarchy_node.VectorNode, size: typing.Tuple[int, int],
         placement_tries: int = 20, improvement_steps: int = 5, max_fails: int = math.inf,
         selection_probability_decay: float = 2, weights: weights_object.Weights = weights_object.Weights(),
         log_steps_directory: str = None, placed_descriptors: np.ndarray = None,
         initial_polygons: typing.List[hierarchy_node.VectorNode] = None, placed_polygons: np.array = None,
-        source_map=None, source_dict=None
+        source_map=None, source_dict=None, search_radius: int = 100
 ) -> hierarchy_node.VectorNode:
     """
     placed_descriptors map:
@@ -114,13 +130,17 @@ def primary_texton_distro(
         result.add_child(placed_texton)
 
     def score_placement(placed_texton: hierarchy_node.VectorNode, centroid: tuple):
+        sub_placed_descriptors, sub_placed_polygons, centroid, new_region_size = get_square_region(
+            placed_descriptors, placed_polygons, *centroid, search_radius
+        )
+
         try:
-            coords = placed_texton.get_raster_coords(centroid, x_lim=(0, size[0]), y_lim=(0, size[1]))
+            coords = placed_texton.get_raster_coords(centroid, x_lim=(0, new_region_size[0]), y_lim=(0, new_region_size[1]))
         except OverflowError:
             return -math.inf
 
-        descriptor_pixels = placed_descriptors[coords[::-1]]
-        polygon_pixels = placed_polygons[coords[::-1]]
+        descriptor_pixels = sub_placed_descriptors[coords[::-1]]
+        polygon_pixels = sub_placed_polygons[coords[::-1]]
 
         target_area = np.sum(descriptor_pixels == placed_texton.category)
         mismatched_area = np.sum((descriptor_pixels != placed_texton.category) & (descriptor_pixels > 0))
@@ -129,7 +149,7 @@ def primary_texton_distro(
             missed_area = 0
 
         else:
-            missed_mask = placed_descriptors == placed_texton.category
+            missed_mask = sub_placed_descriptors == placed_texton.category
             if initial_placed_descriptors is not None:
                 missed_mask = np.logical_and(missed_mask, np.logical_not(initial_placed_descriptors))
 
@@ -213,7 +233,6 @@ def primary_texton_distro(
 
         best_score = -math.inf
         best_centroid = None
-        best_texton_index = None
         best_decay_index = None
         best_texton = None
 
@@ -345,17 +364,10 @@ def primary_texton_distro(
                     iteration, best_score, len(result.children)
                 ))
 
-            # if isinstance(best_texton_index, int):
-            #     best_texton = textons[best_texton_index]
-            # else:
-            #     best_texton = best_texton_index
-
             category_index = unique_categories.index(best_texton.category)
 
             original_decay_index = categorized_texton_indices[category_index].index(best_decay_index)
             texton_selection_probabilities[category_index][original_decay_index] /= selection_probability_decay
-
-            # texton_selection_probabilities[category_index] /= selection_probability_decay
             total_probability = texton_selection_probabilities[category_index].sum()
             texton_selection_probabilities[category_index] /= total_probability
 
