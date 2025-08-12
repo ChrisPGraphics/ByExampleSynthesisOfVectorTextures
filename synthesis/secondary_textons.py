@@ -11,7 +11,7 @@ import synthesis.source_map as source_map_models
 
 def secondary_texton_distro(
         secondary_textons: hierarchy_node.VectorNode, shape: tuple, distances: np.ndarray,
-        percentile: int = 40, source_map: source_map_models.SourceMap = None
+        percentile: int = 50, source_map: source_map_models.SourceMap = None
 ) -> hierarchy_node.VectorNode:
 
     source_dict = {}

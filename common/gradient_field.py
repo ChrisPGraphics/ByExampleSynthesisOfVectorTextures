@@ -15,6 +15,8 @@ def interpolate(points, colors, density, position: np.ndarray, p: float = 3) -> 
 
 def rasterize_rbf(points, colors, size: tuple, function='linear', smooth: int = 15):
     width, height = size
+    width = int(width)
+    height = int(height)
     out_image = np.zeros((height, width, 3), dtype=np.float32)
 
     for c in [0, 1, 2]:
