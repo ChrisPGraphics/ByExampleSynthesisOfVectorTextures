@@ -173,5 +173,4 @@ if __name__ == '__main__':
     cfg = analysis.AnalysisConfig.from_argv()
 
     layers = analyze_texture(cfg)
-
     save_result(cfg, *layers)

@@ -14,8 +14,8 @@ def get_descriptors(textons: hierarchy_node.VectorNode, image_size, average_incl
     descriptor_size = estimate_descriptor_size(textons, average_included)
     logging.info("Estimated descriptor size is {0}x{0}".format(descriptor_size))
 
-    active_width = image_size[1] - descriptor_size
-    active_height = image_size[0] - descriptor_size
+    active_width = image_size[0] - descriptor_size
+    active_height = image_size[1] - descriptor_size
 
     if (
             active_width / descriptor_size < ACTIVE_AREA_DESCRIPTOR_WARNING or
@@ -34,10 +34,10 @@ def get_descriptors(textons: hierarchy_node.VectorNode, image_size, average_incl
         min_x, min_y = centroid - descriptor_size
         max_x, max_y = centroid + descriptor_size
 
-        if centroid[0] < descriptor_size or centroid[0] > image_size[1] - descriptor_size:
+        if centroid[0] < descriptor_size or centroid[0] > image_size[0] - descriptor_size:
             continue
 
-        if centroid[1] < descriptor_size or centroid[1] > image_size[0] - descriptor_size:
+        if centroid[1] < descriptor_size or centroid[1] > image_size[1] - descriptor_size:
             continue
 
         accepted_textons.append(texton)
@@ -46,7 +46,7 @@ def get_descriptors(textons: hierarchy_node.VectorNode, image_size, average_incl
         image_size = (int(image_size[0]), int(image_size[1]))
 
         descriptor = np.zeros(image_size[::-1], dtype=int)
-        descriptor[int(min_x): int(max_x) + 1, int(min_y): int(max_y) + 1] = -1
+        descriptor[int(min_y): int(max_y) + 1, int(min_x): int(max_x) + 1] = -1
 
         for other_texton in textons.children:
             if texton == other_texton:
@@ -66,7 +66,8 @@ def get_descriptors(textons: hierarchy_node.VectorNode, image_size, average_incl
 
         descriptor = descriptor[row_min:row_max + 1, col_min:col_max + 1]
 
-        center_pixel = int(round(centroid[0] - row_min)), int(round(centroid[1] - col_min))
+        # center_pixel = int(round(centroid[0] - row_min)), int(round(centroid[1] - col_min))
+        center_pixel = int(round(centroid[0] - col_min)), int(round(centroid[1] - row_min))
         texton.descriptor = analysis.Descriptor(descriptor, center_pixel)
 
     textons.children = accepted_textons

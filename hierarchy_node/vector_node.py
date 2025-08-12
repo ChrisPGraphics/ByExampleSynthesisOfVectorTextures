@@ -252,7 +252,7 @@ class VectorNode(base_node.BaseNode):
 
     def binary_rasterize(
             self, mask: np.ndarray, centroid: typing.Union[np.ndarray, tuple] = None,
-            color: typing.Union[int, None] = 1, transpose: bool = True
+            color: typing.Union[int, None] = 1
     ):
         if color is None:
             color = self.category
@@ -263,7 +263,7 @@ class VectorNode(base_node.BaseNode):
         else:
             coords = self.exterior + (centroid - self.get_centroid())
 
-        points = [coords.astype(int)[:, [1, 0]]] if transpose else [coords.astype(int)]
+        points = [coords.astype(int)]
 
         if mask.dtype == np.uint8:
             cv2.fillPoly(mask, points, int(color))
@@ -272,6 +272,45 @@ class VectorNode(base_node.BaseNode):
             write_mask = np.zeros_like(mask, dtype=np.uint8)
             cv2.fillPoly(write_mask, points, 1)
             mask[write_mask == 1] = int(color)
+
+    def get_raster_coords(
+            self, centroid: typing.Union[np.ndarray, tuple] = None, x_lim=None, y_lim=None
+    ) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """
+        Returns x, y
+        :param centroid:
+        :param x_lim:
+        :param y_lim:
+        :return:
+        """
+
+        coords = self.exterior
+
+        if centroid is not None:
+            coords = coords + (centroid - self.get_centroid())
+
+        lower = coords.min(axis=0)
+        upper = coords.max(axis=0)
+        size = upper - lower
+
+        mask = np.zeros((size + 1).astype(int), dtype=np.uint8)
+        offset_coords = (coords - lower).astype(int)
+
+        cv2.fillPoly(mask, [offset_coords[:, [1, 0]]], 1)
+        coordinates = np.where(mask == 1)
+
+        coordinates = np.array([(coordinates[0] + lower[0]).astype(int), (coordinates[1] + lower[1]).astype(int)])
+
+        if x_lim is not None:
+            mask = (x_lim[0] < coordinates[0]) & (coordinates[0] < x_lim[1]) & \
+                   (y_lim[0] < coordinates[1]) & (coordinates[1] < y_lim[1])
+
+            if not np.any(mask):
+                raise OverflowError("Out of range")
+
+            coordinates = (coordinates[0][mask], coordinates[1][mask])
+
+        return coordinates
 
     def to_svg(self, filename: str, include_self: bool = False, include_children: bool = True):
         drawing = svgwrite.Drawing(filename, profile='tiny', size=self.get_bounding_size(as_int=True))
@@ -330,8 +369,8 @@ class VectorNode(base_node.BaseNode):
             self._plot()
 
         if include_children:
-            for child in self.children:
-                child.plot()
+            for child in self.level_order_traversal(include_self=False):
+                child._plot()
 
     def _plot(self):
         plt.fill(*self.get_polygon_split_coordinates(), c=self.color)
