@@ -1,6 +1,7 @@
 from synthesis.synthesis_config import SynthesisConfig
-from synthesis.secondary_textons import secondary_texton_distro
+from synthesis.secondary_textons import secondary_texton_distro, secondary_color_adjustment
 from synthesis.primary_textons import primary_texton_distro, global_density_cleanup
 from synthesis.gradient_field import generate_gradient_field
 from synthesis.weights import Weights
-
+import synthesis.source_map as source_map
+from synthesis.export import export_result

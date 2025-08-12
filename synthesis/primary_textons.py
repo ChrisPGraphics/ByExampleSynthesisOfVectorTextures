@@ -189,6 +189,13 @@ def primary_texton_distro(
         os.makedirs(os.path.join(log_steps_directory, "polygons"), exist_ok=True)
         os.makedirs(os.path.join(log_steps_directory, "descriptors"), exist_ok=True)
 
+    source_dict = {}
+    if source_map is not None:
+        source_dict = {i: [] for i in range(source_map.map_count)}
+
+        for child in polygons.children:
+            source_dict[child.source_id].append(child)
+
     textons = polygons.children[:]
     texton_choices = len(textons)
     if texton_choices == 0:
@@ -284,14 +291,12 @@ def primary_texton_distro(
                     placed_descriptors[*center_pixel[::-1]] = 0
                     break
 
-                candidate_texton = texton_index
-
             else:
                 texton_index = categorized_texton_indices[category_index][sample_distribution_once(
                     texton_selection_probabilities[category_index]
                 )]
 
-                candidate_texton = textons[texton_index]
+            candidate_texton = textons[texton_index]
 
             decay_index = texton_index
             score = score_placement(candidate_texton, center_pixel)

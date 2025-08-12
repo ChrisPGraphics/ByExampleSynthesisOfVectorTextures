@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import typing
 
 import PIL.Image
 import numpy as np
@@ -55,19 +56,7 @@ def synthesize_texture(config: synthesis.SynthesisConfig):
             extracted_gradient_field.solid_color
         )
 
-    logging.info("Recomputing secondary texton color...")
-    for texton in secondary_textons.children:
-        if texton.color_delta is None:
-            continue
-
-        centroid = np.clip(texton.get_centroid().astype(int), 0, shape)
-        field_color = gradient_field[*centroid[::-1]]
-
-        color_change = (field_color + texton.color_delta) - texton.color
-
-        for node in texton.level_order_traversal(include_self=True):
-            node.original_color = node.color
-            node.color = np.clip(node.color + color_change, 0, 1)
+    synthesis.secondary_color_adjustment(secondary_textons, gradient_field, shape)
 
     return primary_textons, secondary_textons, gradient_field_result, gradient_field
 
@@ -80,26 +69,10 @@ def save_result(
         gradient_field: np.ndarray
 ):
     logging.info("Saving synthetic files to {}...".format(os.path.abspath(config.output_directory)))
-    os.makedirs(config.output_directory, exist_ok=True)
-
-    if not config.no_binary:
-        primary_textons.save(os.path.join(config.output_directory, "primary_textons.dat"))
-        secondary_textons.save(os.path.join(config.output_directory, "secondary_textons.dat"))
-        gradient_field_result.save(os.path.join(config.output_directory, "gradient_field.dat"))
-        
-    primary_raster = primary_textons.to_pil([0, 0, 0, 0])
-    secondary_raster = secondary_textons.to_pil([0, 0, 0, 0])
-    gradient_field = PIL.Image.fromarray((gradient_field * 255).astype(np.uint8))
-    
-    if not config.no_layers:
-        primary_raster.save(os.path.join(config.output_directory, "primary_textons.png"))
-        secondary_raster.save(os.path.join(config.output_directory, "secondary_textons.png"))
-        gradient_field.save(os.path.join(config.output_directory, "gradient_field.png"))
-
-    gradient_field.paste(secondary_raster, (0, 0), secondary_raster)
-    gradient_field.paste(primary_raster, (0, 0), primary_raster)
-
-    gradient_field.save(os.path.join(config.output_directory, "result.png"))
+    synthesis.export_result(
+        primary_textons, secondary_textons, gradient_field_result, gradient_field,
+        config.output_directory, config.no_binary, config.no_layers
+    )
 
 
 if __name__ == '__main__':
