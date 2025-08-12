@@ -22,7 +22,12 @@ def synthesize_texture(config: synthesis.SynthesisConfig):
 
     logging.info("Synthesizing primary texton distribution...")
     primary_textons = synthesis.primary_texton_distro(
-        extracted_primary_textons.primary_textons, shape, log_steps_directory=config.log_steps_path
+        extracted_primary_textons.primary_textons, shape,
+        log_steps_directory=config.log_steps_path,
+        placement_tries=config.placement_tries,
+        improvement_steps=config.placement_tries,
+        max_fails=config.max_fails,
+        selection_probability_decay=config.selection_probability_decay
     )
 
     if config.skip_density_correction:
