@@ -1,3 +1,5 @@
+import json
+import xml.etree.cElementTree as ET
 import math
 import typing
 
@@ -312,8 +314,14 @@ class VectorNode(base_node.BaseNode):
 
         return coordinates
 
-    def to_svg(self, filename: str, include_self: bool = False, include_children: bool = True):
-        drawing = svgwrite.Drawing(filename, profile='tiny', size=self.get_bounding_size(as_int=True))
+    def to_svg(self, filename: typing.Union[str, svgwrite.Drawing], include_self: bool = False, include_children: bool = True):
+        if isinstance(filename, svgwrite.Drawing):
+            save_drawing = False
+            drawing = filename
+
+        else:
+            save_drawing = True
+            drawing = svgwrite.Drawing(filename, profile='tiny', size=self.get_bounding_size(as_int=True))
 
         if include_self and self.color is not None:
             self._to_svg(drawing)
@@ -322,13 +330,14 @@ class VectorNode(base_node.BaseNode):
             for child in self.level_order_traversal(include_self=False):
                 child._to_svg(drawing)
 
-        drawing.save()
+        if save_drawing:
+            drawing.save()
 
 
     def _to_svg(self, drawing):
         drawing.add(
             svgwrite.shapes.Polygon(
-                self.get_polygon_coordinate_pairs(yx=True).tolist(),
+                self.get_polygon_coordinate_pairs().tolist(),
                 fill=svgwrite.rgb(*np.clip(self.color, 0, 1) * 100, '%')
             )
         )
@@ -375,8 +384,67 @@ class VectorNode(base_node.BaseNode):
     def _plot(self):
         plt.fill(*self.get_polygon_split_coordinates(), c=self.color)
 
-    def to_xml(self):
-        pass
+    def to_xml(self, filename: typing.Union[str, ET.Element], include_self: bool = False, include_children: bool = True):
+        if isinstance(filename, ET.Element):
+            root = filename
 
-    def to_json(self):
-        pass
+        else:
+            root = ET.Element("VectorNode")
+
+        if include_self:
+            self._to_xml(root, include_children=include_children)
+
+        else:
+            for child in self.children:
+                child._to_xml(root, include_children=include_children)
+
+        if isinstance(filename, str):
+            tree = ET.ElementTree(root)
+            tree.write(filename, xml_declaration=True, encoding="utf-8")
+
+    def _to_xml(self, parent: ET.Element, include_children: bool = True):
+        exterior = " ".join("{},{}".format(*coord) for coord in self.exterior)
+        centroid = "{},{}".format(*self.get_centroid())
+
+        self_element = ET.SubElement(
+            parent,
+            "texton",
+            exterior=exterior,
+            category="" if self.category is None else str(self.category),
+            color='#%02x%02x%02x' % tuple(self.color_to_int()),
+            color_delta="" if self.color_delta is None else '#%02x%02x%02x' % tuple(self.color_delta_to_int()),
+            area=str(self.get_area()),
+            centroid=centroid
+        )
+
+        if include_children:
+            for child in self.children:
+                child._to_xml(self_element, include_children=True)
+
+    def to_json(self, filename: str = None, include_self: bool = False, include_children: bool = True):
+        if include_self:
+            result = self._to_json(include_children=include_children)
+        else:
+            result = [child._to_json(include_children=include_children) for child in self.children]
+
+        if filename is not None:
+            with open(filename, 'w') as f:
+                f.write(json.dumps(result))
+
+        return result
+
+    def _to_json(self, include_children: bool = True) -> dict:
+        result = dict(
+            exterior=self.exterior.astype(float).tolist(),
+            category=None if self.category is None else int(self.category),
+            color='#%02x%02x%02x' % tuple(self.color_to_int()),
+            color_delta=None if self.color_delta is None else '#%02x%02x%02x' % tuple(self.color_delta_to_int()),
+            area=self.get_area(),
+            centroid=self.get_centroid().astype(float).tolist()
+        )
+
+        if include_children and len(self.children) != 0:
+            result["children"] = [child._to_json() for child in self.children]
+
+        return result
+

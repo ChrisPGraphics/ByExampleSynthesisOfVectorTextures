@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generated schema for Root",
+  "type": "object",
+  "properties": {
+    "width": {
+      "type": "number"
+    },
+    "height": {
+      "type": "number"
+    },
+    "version": {
+      "type": "string"
+    },
+    "primary": {
+      "type": "object",
+      "properties": {
+        "polygon_count": {
+          "type": "number"
+        },
+        "textons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "exterior": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "category": {
+                "type": "number"
+              },
+              "color": {
+                "type": "string"
+              },
+              "color_delta": {},
+              "area": {
+                "type": "number"
+              },
+              "centroid": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "exterior": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "category": {},
+                    "color": {
+                      "type": "string"
+                    },
+                    "color_delta": {},
+                    "area": {
+                      "type": "number"
+                    },
+                    "centroid": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "required": [
+                    "exterior",
+                    "category",
+                    "color",
+                    "color_delta",
+                    "area",
+                    "centroid"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "exterior",
+              "category",
+              "color",
+              "color_delta",
+              "area",
+              "centroid",
+              "children"
+            ]
+          }
+        }
+      },
+      "required": [
+        "polygon_count",
+        "textons"
+      ]
+    },
+    "secondary": {
+      "type": "object",
+      "properties": {
+        "polygon_count": {
+          "type": "number"
+        },
+        "textons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "exterior": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "category": {},
+              "color": {
+                "type": "string"
+              },
+              "color_delta": {
+                "type": "string"
+              },
+              "area": {
+                "type": "number"
+              },
+              "centroid": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": [
+              "exterior",
+              "category",
+              "color",
+              "color_delta",
+              "area",
+              "centroid"
+            ]
+          }
+        }
+      },
+      "required": [
+        "polygon_count",
+        "textons"
+      ]
+    },
+    "gradient": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "number"
+        },
+        "point_spacing": {
+          "type": "number"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "color": {
+                "type": "string"
+              },
+              "point": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": [
+              "color",
+              "point"
+            ]
+          }
+        }
+      },
+      "required": [
+        "total",
+        "point_spacing",
+        "points"
+      ]
+    }
+  },
+  "required": [
+    "width",
+    "height",
+    "version",
+    "primary",
+    "secondary",
+    "gradient"
+  ]
+}

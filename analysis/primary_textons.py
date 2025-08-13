@@ -74,7 +74,7 @@ def get_descriptors(textons: hierarchy_node.VectorNode, image_size, average_incl
     return descriptor_size
 
 
-def estimate_descriptor_size(textons: hierarchy_node.VectorNode, average_included: float = 2, buffer: int = 10) -> int:
+def estimate_descriptor_size(textons: hierarchy_node.VectorNode, average_included: float = 2) -> int:
     if average_included < 1:
         logging.warning("Average included is less than 1. This is too low to get plausible results.")
 
