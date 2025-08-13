@@ -3,6 +3,8 @@ import math
 import os
 import typing
 
+import synthesis
+
 
 class SynthesisConfig:
     placement_tries: int = 20
@@ -20,11 +22,20 @@ class SynthesisConfig:
     no_layers: bool = False
     no_binary: bool = False
 
+    _description = "Synthesizes a novel texture after 'analyze_texture.py' has completed the preprocessing"
+
+    @staticmethod
+    def _add_args(parser):
+        pass
+
+    @staticmethod
+    def _set_properties(config, args):
+        pass
 
     @classmethod
     def from_argv(cls) -> typing.Self:
         parser = argparse.ArgumentParser(
-            description="Synthesizes a novel texture after 'analyze_texture.py' has completed the preprocessing",
+            description=cls._description,
             epilog='If there are any issues or questions, feel free to visit our GitHub repository at '
                    'https://github.com/ChrisPGraphics/ByExampleSynthesisOfVectorTextures'
         )
@@ -78,6 +89,11 @@ class SynthesisConfig:
             '--default_weights', action='store_true',
             help="Use the default weights instead of fine-tuned weights from the optimizer (if available)"
         )
+        parser.add_argument(
+            '--weights_file',
+            help="The path to a weights file from the optimizer"
+        )
+        cls._add_args(parser)
 
         args = parser.parse_args()
 
@@ -100,12 +116,26 @@ class SynthesisConfig:
         config.log_steps_path = args.log_steps_path
         config.radius_percentile = args.radius_percentile
         config.skip_density_correction = args.skip_density_correction
-        config.default_weights = args.default_weights
         config.width = args.width
         config.height = args.height
         config.no_layers = args.no_layers
         config.no_binary = args.no_binary
         config.intermediate_directory = intermediate_directory
         config.output_directory = output_directory
+
+        default_weights_path = os.path.join(intermediate_directory, "placement_weights.json")
+        if args.default_weights:
+            config.weights = synthesis.Weights()
+
+        elif args.weights_file is not None:
+            config.weights, _ = synthesis.Weights.from_json(args.weights_file)
+
+        elif os.path.isfile(default_weights_path):
+            config.weights, _ = synthesis.Weights.from_json(default_weights_path)
+
+        else:
+            config.weights = synthesis.Weights()
+
+        cls._set_properties(config, args)
 
         return config

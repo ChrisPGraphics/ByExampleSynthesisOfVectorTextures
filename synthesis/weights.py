@@ -1,4 +1,5 @@
 import json
+import os.path
 import typing
 
 import numpy as np
@@ -37,10 +38,19 @@ class Weights(common.SavableObject):
     def from_array(cls, array) -> 'typing.Self':
         return cls(*array)
 
-    def to_json(self, filename, metadata: dict):
+    def to_json(self, filename, score: float, force_overwrite: bool = False):
+        if not force_overwrite and os.path.isfile(filename):
+            _, current_metadata = self.from_json(filename)
+            current_score = current_metadata["score"]
+
+            if score >= current_score:
+                return
+
         result = {
             "weights": self.__dict__,
-            "metadata": metadata
+            "metadata": {
+                "score": score
+            }
         }
 
         with open(filename, 'w') as f:
