@@ -314,6 +314,13 @@ class VectorNode(base_node.BaseNode):
 
         return coordinates
 
+    def rotate(self, angle: float):
+        centroid = tuple(self.get_centroid())
+
+        for child in self.level_order_traversal():
+            rotated = shapely.affinity.rotate(child.as_shapely(), angle, centroid, use_radians=True)
+            child.from_shapely(rotated)
+
     def to_svg(self, filename: typing.Union[str, svgwrite.Drawing], include_self: bool = False, include_children: bool = True):
         if isinstance(filename, svgwrite.Drawing):
             save_drawing = False
