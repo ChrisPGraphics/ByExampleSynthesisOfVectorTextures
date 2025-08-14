@@ -119,12 +119,12 @@ if __name__ == '__main__':
     cfg = synthesis.SynthesisConfig()
     cfg.output_directory = os.path.join("output", "joint_synthesis")
 
-    joint_synthesis(
-        cfg, ["concrete_4", "flowers_1", "tile_1"],
-        synthesis.source_map.MultiSourceMap([
-            "source_maps/pg_background.png",
-            "source_maps/pg_p.png",
-            "source_maps/pg_g.png",
-        ]),
-        (1000, 515)
-    )
+    exemplars = ["concrete_4", "flowers_1", "tile_1"]
+    source_map = synthesis.source_map.MultiSourceMap([
+        "source_maps/pg_background.png",
+        "source_maps/pg_p.png",
+        "source_maps/pg_g.png",
+    ])
+    result_size = (1000, 515)
+
+    joint_synthesis(cfg, exemplars, source_map, result_size)
