@@ -1,6 +1,8 @@
 # By-Example Synthesis of Vector Textures
 The official code repository for the paper "By-Example Synthesis of Vector Textures" by Christopher Palazzolo, Oliver van Kaick, and David Mould.
 
+[[Project Page](https://chrispgraphics.github.io/2025-vector-textures.html)] [[Vector Interpolation Video](https://www.youtube.com/watch?v=JAzxg2WRWDw)]
+
 ## Installation
 First, clone the repository to your local machine.
 
