@@ -2,7 +2,7 @@
 The official code repository for the paper "By-Example Synthesis of Vector Textures" by Christopher Palazzolo, Oliver van Kaick, and David Mould.
 
 [[Project Page](https://chrispgraphics.github.io/2025-vector-textures.html)] [[Vector Interpolation Video](https://www.youtube.com/watch?v=JAzxg2WRWDw)]
-
+[[Results Repository](https://github.com/ChrisPGraphics/ByExampleSynthesisOfVectorTexturesResults)]
 ## Installation
 First, clone the repository to your local machine.
 
@@ -12,6 +12,7 @@ cd ByExampleSynthesisOfVectorTextures
 ```
 
 From here, you can either install the repository [Manually](#manual-installation-instructions) or with a [Docker Container](#docker-install-instructions).
+We also provide several converted exemplars and synthesised results in a few different formats at our [Results Repository](https://github.com/ChrisPGraphics/ByExampleSynthesisOfVectorTexturesResults). This allows for easy prototyping without needing to first install our code.
 
 ### Manual Installation Instructions
 Assuming you have Python installed (we use Python 3.11.5), follow these instructions to prepare your local machine to use our code. 
