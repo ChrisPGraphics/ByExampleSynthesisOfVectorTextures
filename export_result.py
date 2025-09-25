@@ -87,6 +87,10 @@ class ResultExporter(abc.ABC):
     def get_name(self) -> str:
         return self.__class__.__name__
 
+    @abc.abstractmethod
+    def get_default_extension(self) -> str:
+        pass
+
 
 class XMLExporter(ResultExporter):
     def _convert_result(
@@ -122,6 +126,9 @@ class XMLExporter(ResultExporter):
         tree = ET.ElementTree(root)
         tree.write(result_path, xml_declaration=True, encoding="utf-8")
 
+    def get_default_extension(self) -> str:
+        return ".xml"
+
 
 class JSONExporter(ResultExporter):
     def _convert_result(
@@ -146,6 +153,9 @@ class JSONExporter(ResultExporter):
 
         with open(result_path, 'w') as f:
             f.write(json.dumps(result, separators=(',', ':')))
+
+    def get_default_extension(self) -> str:
+        return ".json"
 
 
 class SVGExporter(ResultExporter):
@@ -178,6 +188,9 @@ class SVGExporter(ResultExporter):
         logging.info("Saving to '{}'...".format(os.path.abspath(result_path)))
         dwg.save()
 
+    def get_default_extension(self) -> str:
+        return ".svg"
+
 
 class RasterExporter(ResultExporter):
     def _convert_result(
@@ -198,6 +211,9 @@ class RasterExporter(ResultExporter):
 
         logging.info("Saving to '{}'...".format(os.path.abspath(result_path)))
         background.save(result_path)
+
+    def get_default_extension(self) -> str:
+        return ".png"
 
 
 if __name__ == '__main__':
