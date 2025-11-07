@@ -7,12 +7,13 @@ import hierarchy_node
 class PrimaryTextonResult(common.SavableObject):
     def __init__(
             self, primary_textons: hierarchy_node.VectorNode, descriptor_size: int,
-            global_coverage: float, per_category_coverage: dict
+            global_coverage: float, per_category_coverage: dict, primary_texton_mask: np.ndarray = None
     ):
         self.primary_textons: hierarchy_node.VectorNode = primary_textons
         self.descriptor_size = descriptor_size
         self.global_coverage = global_coverage
         self.per_category_coverage = per_category_coverage
+        self.primary_texton_mask = primary_texton_mask
 
 
 class SecondaryTextonResult(common.SavableObject):

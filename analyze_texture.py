@@ -25,6 +25,8 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
     logging.info("Extracting primary textons...")
     primary_masks, primary_remainder = analysis.extract_textons(image, config.primary_segmentation)
 
+    primary_texton_mask = primary_remainder.copy()
+
     coverage_percent = 1 - np.count_nonzero(primary_remainder) / primary_remainder.size
     coverage_pixels = primary_remainder.size - np.count_nonzero(primary_remainder)
 
@@ -41,7 +43,7 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
         )
 
         if config.secondary_promotion_percentile != 0 and config.secondary_promotion_percentile is not None:
-            logging.info("Promiting secondary textons")
+            logging.info("Promoting secondary textons")
             analysis.promote_textons(primary_masks, secondary_masks, config.secondary_promotion_percentile)
 
         distances = analysis.get_secondary_spacing(np.array([mask.approximate_centroid() for mask in secondary_masks]), primary_remainder)
@@ -106,7 +108,7 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
 
     return (
         analysis.result_objects.PrimaryTextonResult(
-            primary_textons, descriptor_size, coverage_percent, per_category_coverage
+            primary_textons, descriptor_size, coverage_percent, per_category_coverage, primary_texton_mask
         ),
         analysis.result_objects.SecondaryTextonResult(
             secondary_textons, distances
@@ -135,6 +137,17 @@ def save_result(
     image = common.loader.load_image(config.exemplar_path)
     bgr_image = cv2.cvtColor((image * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
     cv2.imwrite(os.path.join(config.intermediate_path, "exemplar.png"), bgr_image)
+
+    logging.info("Saving removed primary texton files...")
+    cv2.imwrite(
+        os.path.join(config.intermediate_path, "removed_primaries_mask.png"),
+        (primary_textons.primary_texton_mask * 255).astype(np.uint8)
+    )
+
+    cv2.imwrite(
+        os.path.join(config.intermediate_path, "removed_primaries_alpha.png"),
+        np.concatenate((bgr_image, (primary_textons.primary_texton_mask * 255)[..., np.newaxis]), axis=-1)
+    )
 
     logging.info("Saving raster version of extractions...")
     primary_textons.primary_textons.to_raster(
