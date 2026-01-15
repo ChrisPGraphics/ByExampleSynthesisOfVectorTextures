@@ -22,11 +22,11 @@ class BaseSegmentation(abc.ABC):
         return self.__class__.__name__
 
     def segment(
-            self, image: np.ndarray, mask: np.ndarray = None, offset: int = 0
+            self, image: np.ndarray, mask: np.ndarray = None, offset: int = 0, sort_masks: bool = True
     ) -> typing.List[np.ndarray]:
 
         if mask is None:
-            mask = np.ones(image.shape[:2])
+            mask = np.ones(image.shape[:2], dtype=bool)
 
         segments = self._segment(image, mask)
 
@@ -59,9 +59,12 @@ class BaseSegmentation(abc.ABC):
 
         if not self.silent:
             logging.info("{} valid segments remain".format(len(valid_segments)))
-            logging.info("Sorting masks by size...")
 
-        valid_segments.sort(key=lambda x: x.sum(), reverse=True)
+            if sort_masks:
+                logging.info("Sorting masks by size...")
+
+        if sort_masks:
+            valid_segments.sort(key=lambda x: x.sum(), reverse=True)
 
         return valid_segments
 
