@@ -19,8 +19,12 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
     analysis.result_objects.SecondaryTextonResult,
     analysis.result_objects.GradientFieldResult
 ]:
-    logging.info("Reading image '{}'...".format(os.path.abspath(config.exemplar_path)))
-    image = common.loader.load_image(config.exemplar_path)
+    if isinstance(config.exemplar_path, np.ndarray):
+        image = config.exemplar_path
+
+    else:
+        logging.info("Reading image '{}'...".format(os.path.abspath(config.exemplar_path)))
+        image = common.loader.load_image(config.exemplar_path)
 
     logging.info("Extracting primary textons...")
     primary_masks, primary_remainder = analysis.extract_textons(image, config.primary_segmentation)
@@ -89,9 +93,13 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
             "Use less aggressive segmentation parameters to fix this problem"
         )
 
-    logging.info("Removing polygons that are too close to the edge...")
-    analysis.remove_edge_textons(primary_textons)
-    analysis.remove_edge_textons(secondary_textons)
+    if config.remove_edge_textons:
+        logging.info("Removing polygons that are too close to the edge...")
+        analysis.remove_edge_textons(primary_textons)
+        analysis.remove_edge_textons(secondary_textons)
+
+    else:
+        logging.info("Skipping polygon edge removal...")
 
     logging.info("Categorizing polygons using {}...".format(config.primary_texton_clustering.get_algorithm_name()))
     config.primary_texton_clustering.categorize(primary_textons.children)
@@ -99,16 +107,25 @@ def analyze_texture(config: analysis.AnalysisConfig) -> typing.Tuple[
     logging.info("Computing per category coverage...")
     per_category_coverage = analysis.compute_category_coverage(primary_textons, coverage_pixels, primary_remainder)
 
-    logging.info("Computing primary texton descriptors...")
-    descriptor_size = analysis.get_descriptors(
-        primary_textons, image.shape[:2][::-1], average_included=config.descriptor_average_included
-    )
+    if config.create_descriptors:
+        logging.info("Computing primary texton descriptors...")
+        descriptor_size = analysis.get_descriptors(
+            primary_textons, image.shape[:2][::-1], average_included=config.descriptor_average_included
+        )
 
-    logging.info("{} selectable primary textons remain".format(len(primary_textons.children)))
+        logging.info("{} selectable primary textons remain".format(len(primary_textons.children)))
+
+    else:
+        logging.info("Skipping descriptor creation")
+        descriptor_size = -1
+
+    final_primary_mask = np.ones_like(primary_masks[0].mask, dtype=bool)
+    for mask in primary_masks:
+        final_primary_mask[mask.mask] = False
 
     return (
         analysis.result_objects.PrimaryTextonResult(
-            primary_textons, descriptor_size, coverage_percent, per_category_coverage, primary_texton_mask
+            primary_textons, descriptor_size, coverage_percent, per_category_coverage, final_primary_mask
         ),
         analysis.result_objects.SecondaryTextonResult(
             secondary_textons, distances
@@ -148,6 +165,8 @@ def save_result(
         os.path.join(config.intermediate_path, "removed_primaries_alpha.png"),
         np.concatenate((bgr_image, (primary_textons.primary_texton_mask * 255)[..., np.newaxis]), axis=-1)
     )
+
+    del primary_textons.primary_texton_mask
 
     logging.info("Saving raster version of extractions...")
     primary_textons.primary_textons.to_raster(

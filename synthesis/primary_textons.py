@@ -30,7 +30,6 @@ def sample_distribution_once(probabilities):
     return selected_index
 
 
-
 def count_connected_pixels(mask: np.ndarray, coords):
     temp_mask = np.zeros_like(mask, dtype=np.uint8)
     temp_mask[mask] = 1

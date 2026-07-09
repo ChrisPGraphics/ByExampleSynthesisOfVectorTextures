@@ -6,6 +6,7 @@ import tqdm
 import analysis
 import hierarchy_node
 from scipy.spatial.distance import pdist
+import common
 
 ACTIVE_AREA_DESCRIPTOR_WARNING = 4
 
@@ -86,7 +87,13 @@ def estimate_descriptor_size(textons: hierarchy_node.VectorNode, average_include
 
     if len(element_distances) == 0:
         logging.warning("Failed to create triangulation! Using mean minimum spacing instead.")
-        mean_space = np.mean(np.partition(pdist(centroids), 1)[1::])
+
+        try:
+            mean_space = np.mean(np.partition(pdist(centroids), 1)[1::])
+        except ValueError:
+            raise common.exceptions.InsufficientTextonsException(
+                "Not enough textons to estimate descriptor size. Received {}".format(len(textons.children))
+            )
 
     else:
         mean_space = np.mean(element_distances)

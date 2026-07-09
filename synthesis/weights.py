@@ -1,4 +1,5 @@
 import json
+import logging
 import os.path
 import typing
 
@@ -58,10 +59,14 @@ class Weights(common.SavableObject):
 
     @staticmethod
     def from_json(filename: str) -> typing.Tuple['Weights', dict]:
+        logging.info("Loading weights file from '{}'".format(os.path.abspath(filename)))
+
         with open(filename, 'r') as f:
             data = json.loads(f.read())
 
         weights = Weights(**data["weights"])
         metadata = data["metadata"]
+
+        logging.info("Loaded weights with metadata: {}".format(metadata))
 
         return weights, metadata

@@ -1,0 +1,2 @@
+class InsufficientTextonsException(Exception):
+    pass

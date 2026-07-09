@@ -1,5 +1,5 @@
 opencv-python~=4.8.1.78
-numpy~=1.24.3
+numpy~=1.26.4
 scipy~=1.11.3
 numba~=0.58.0
 bridson~=0.1.0
@@ -11,3 +11,4 @@ pillow~=11.2.1
 svgwrite~=1.4.3
 scikit-learn~=1.5.0
 pymoo~=0.6.1.1
+shapelysmooth~=0.2.1

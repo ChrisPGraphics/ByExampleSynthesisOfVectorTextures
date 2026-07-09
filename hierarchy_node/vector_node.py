@@ -15,6 +15,7 @@ import shapely.affinity
 import shapely.coords
 import svgwrite
 import svgwrite.shapes
+import shapelysmooth
 
 if typing.TYPE_CHECKING:
     import analysis
@@ -63,6 +64,12 @@ class VectorNode(base_node.BaseNode):
     def from_shapely(cls, polygon: shapely.Polygon, category: int = None, color: np.ndarray = None) -> typing.Self:
         exterior = np.array(polygon.exterior.coords).astype(float)
         return cls(exterior, category, color)
+
+    def smooth_boundary(self, factor: float = 0.5, mu: float = -0.5, steps: int = 5):
+        for node in self.level_order_traversal():
+            smoothed_geometry = shapelysmooth.taubin_smooth(node.as_shapely(), factor, mu, steps)
+            smoothed_geometry.simplify(0.5)
+            node.set_exterior(smoothed_geometry)
 
     def get_children_by_category(self) -> dict:
         result = {}
@@ -340,7 +347,6 @@ class VectorNode(base_node.BaseNode):
         if save_drawing:
             drawing.save()
 
-
     def _to_svg(self, drawing):
         drawing.add(
             svgwrite.shapes.Polygon(
@@ -352,29 +358,51 @@ class VectorNode(base_node.BaseNode):
     def to_raster(self, filename: str, background_color=None, rgba: bool = True, include_self: bool = False, include_children: bool = True):
         self.to_pil(background_color, rgba, include_self, include_children).save(filename)
 
+    def to_numpy(self, background_color=None, rgba: bool = True, include_self: bool = False, include_children: bool = True) -> np.ndarray:
+        pil = self.to_pil(background_color, rgba, include_self, include_children)
+        return np.asarray(pil) / 255
+
+    def to_binary_array(self) -> np.ndarray:
+        points = (self.get_polygon_coordinate_pairs() - np.min(self.exterior, axis=0)).astype(int)
+
+        result = np.zeros((self.get_bounding_width(True) + 1, self.get_bounding_height(True) + 1), dtype=int)
+        cv2.fillPoly(result, [points], 1)
+
+        return result.astype(bool)
+
+    def to_binary_array_full(self, shape) -> np.ndarray:
+        points = self.get_polygon_coordinate_pairs().astype(int)
+
+        result = np.zeros(shape, dtype=int)
+        cv2.fillPoly(result, [points], 1)
+
+        return result.astype(bool)
+
     def to_pil(self, background_color=None, rgba: bool = True, include_self: bool = False, include_children: bool = True) -> PIL.Image.Image:
+        shift = -np.min(self.exterior, axis=0)
+
         result = PIL.Image.new(
             "RGBA" if rgba else "RGB",
             self.get_bounding_size(True),
-            tuple(self.color if background_color is None else background_color)
+            tuple(self.color_to_int() if background_color is None else background_color)
         )
         result_draw = PIL.ImageDraw.ImageDraw(result, 'RGBA')
 
         if include_self and self.color is not None:
-            self._to_pil(result, result_draw)
+            self._to_pil(result, result_draw, shift=shift)
 
         if include_children:
             for child in self.level_order_traversal(include_self=False):
-                child._to_pil(result, result_draw)
+                child._to_pil(result, result_draw, shift=shift)
 
         return result
 
-    def _to_pil(self, image: PIL.Image.Image, image_draw: PIL.ImageDraw.ImageDraw):
+    def _to_pil(self, image: PIL.Image.Image, image_draw: PIL.ImageDraw.ImageDraw, shift=np.zeros(2)):
         fill_color = list(self.color_to_int())
         if len(fill_color) == 3:
             fill_color.append(255)
 
-        coordinates = [tuple(c) for c in self.get_polygon_coordinate_pairs().astype(int)]
+        coordinates = [tuple(c) for c in self.get_polygon_coordinate_pairs().astype(int) + shift]
         if len(coordinates) < 2:
             return
 

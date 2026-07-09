@@ -21,13 +21,15 @@ class AnalysisConfig:
     secondary_promotion_percentile: typing.Union[float, None] = 50
     background_query_point_spacing: float = 25
     intermediate_path: str = "intermediate"
+    remove_edge_textons: bool = True
+    create_descriptors: bool = True
 
     def __init__(
             self,
             exemplar_path: str,
             primary_segmentation: segmentation.BaseSegmentation = DefaultValue,
-            secondary_segmentation: segmentation.BaseSegmentation = DefaultValue,
-            detail_segmentation: segmentation.BaseSegmentation = DefaultValue
+            secondary_segmentation: typing.Union[segmentation.BaseSegmentation, None] = DefaultValue,
+            detail_segmentation: typing.Union[segmentation.BaseSegmentation, None] = DefaultValue
     ):
         self.exemplar_path = exemplar_path
         self.primary_segmentation = primary_segmentation
